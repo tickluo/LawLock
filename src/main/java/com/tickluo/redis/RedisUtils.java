@@ -4,9 +4,11 @@ import com.tickluo.LawLockConfig;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.exceptions.JedisException;
 
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -137,6 +139,19 @@ public class RedisUtils {
         }
     }
 
+    public synchronized static boolean setnx(String key, String value, int seconds) {
+        try {
+            Jedis jedis = getJedis();
+            boolean result = jedis.setnx(key, value) > 0;
+            jedis.expire(key, seconds);
+            jedis.close();
+            return result;
+        } catch (Exception e) {
+            _log.error("Setnx key error : " + e);
+            return false;
+        }
+    }
+
     /**
      * 获取String值
      *
@@ -248,5 +263,25 @@ public class RedisUtils {
         } catch (Exception e) {
             _log.error("sadd error : " + e);
         }
+    }
+
+    public synchronized static Long ttl(String key) throws JedisException {
+        Jedis jedis = RedisUtils.getJedis();
+        Long timeout = jedis.ttl(key);
+        jedis.close();
+        return timeout;
+    }
+
+    public synchronized static void setExpire(String key, int seconds) throws JedisException {
+        Jedis jedis = RedisUtils.getJedis();
+        jedis.expire(key, seconds);
+        jedis.close();
+    }
+
+    public synchronized static boolean exist(String key) throws JedisException {
+        Jedis jedis = RedisUtils.getJedis();
+        boolean exist = jedis.exists(key);
+        jedis.close();
+        return exist;
     }
 }

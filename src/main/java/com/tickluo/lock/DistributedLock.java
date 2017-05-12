@@ -2,28 +2,70 @@ package com.tickluo.lock;
 
 
 import com.tickluo.LawLockConfig;
+import com.tickluo.redis.RedisUtils;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Transaction;
+
+import java.util.UUID;
 
 public class DistributedLock implements LawLock {
+    private String KEY_DES = "lock:";
+    private int LOCK_TIMEOUT = 3 * 1000;
+    private int ATTEMPT_TIMEOUT = 6 * 1000;
+    private int WAITING_TIME = 50;
 
     @Override
-    public void lock(String key) throws InterruptedException {
-        while (!tryLock()) {
-            Thread.currentThread().sleep(LawLockConfig.DEFAULT_WAITING_TIME);
+    public String lock(String key) throws InterruptedException {
+        String wrapKey = KEY_DES.concat(key);
+        Long endTime = System.currentTimeMillis() + ATTEMPT_TIMEOUT;
+        while (System.currentTimeMillis() < endTime) {
+            String lockId = tryLock(key);
+            if (lockId != null) {
+                return lockId;
+            }
+            if (RedisUtils.ttl(wrapKey) < 0) {
+                RedisUtils.setExpire(wrapKey, LOCK_TIMEOUT);
+            }
+            Thread.currentThread().sleep(WAITING_TIME);
         }
+        return null;
     }
 
     @Override
-    public void unlock() {
+    public String tryLock(String key) {
+        String lockRandomId = UUID.randomUUID().toString();
 
+        if (RedisUtils.setnx(KEY_DES.concat(key), lockRandomId, LOCK_TIMEOUT)) {
+            return lockRandomId;
+        }
+        return null;
     }
 
     @Override
-    public boolean tryLock() {
+    public boolean unlock(String key, String lockId) {
+        String wrapKey = KEY_DES.concat(key);
+        Long endTime = System.currentTimeMillis() + ATTEMPT_TIMEOUT;
+
+        while (System.currentTimeMillis() < endTime) {
+            Jedis jedis = RedisUtils.getJedis();
+            jedis.watch(wrapKey);
+            if (lockId.equals(jedis.get(wrapKey))) {
+                Transaction transaction = jedis.multi();
+                transaction.del(wrapKey);
+                if (transaction.exec() != null) {
+                    return true;
+                }
+                continue;
+            }
+            jedis.unwatch();
+            break;
+        }
         return false;
     }
 
     @Override
-    public boolean isLocked() {
-        return false;
+    public boolean isLocked(String key) {
+        String wrapKey = KEY_DES.concat(key);
+        return RedisUtils.exist(wrapKey);
     }
 }

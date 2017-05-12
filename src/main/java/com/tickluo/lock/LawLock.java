@@ -2,12 +2,12 @@ package com.tickluo.lock;
 
 public interface LawLock {
 
-    void lock(String key) throws InterruptedException;
+    String lock(String key) throws InterruptedException;
 
-    void unlock();
+    boolean unlock(String key, String lockId);
 
-    boolean tryLock();
+    String tryLock(String key);
 
-    boolean isLocked();
+    boolean isLocked(String key);
 
 }
