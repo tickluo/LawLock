@@ -9,6 +9,11 @@ target/
 .settings
 .springBeans
 
+# Package Files #
+*.jar
+*.war
+*.ear
+
 ### IntelliJ IDEA ###
 .idea
 *.iws
@@ -22,3 +27,6 @@ nbbuild/
 dist/
 nbdist/
 .nb-gradle/
+
+### temp ###
+vendor/

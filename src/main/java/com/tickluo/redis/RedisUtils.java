@@ -40,7 +40,7 @@ public class RedisUtils {
     /**
      * 在多线程环境同步初始化
      */
-    private static synchronized void poolInit() {
+    private static void poolInit() {
         if (jedisPool == null) {
             initialPool();
         }
@@ -52,7 +52,7 @@ public class RedisUtils {
      *
      * @return Jedis
      */
-    public synchronized static Jedis getJedis() {
+    public static Jedis getJedis() {
         poolInit();
         Jedis jedis = null;
         try {
@@ -76,7 +76,7 @@ public class RedisUtils {
      * @param key
      * @param value
      */
-    public synchronized static void set(String key, String value) {
+    public static void set(String key, String value) {
         try {
             value = StringUtils.isBlank(value) ? "" : value;
             Jedis jedis = getJedis();
@@ -93,7 +93,7 @@ public class RedisUtils {
      * @param key
      * @param value
      */
-    public synchronized static void set(byte[] key, byte[] value) {
+    public static void set(byte[] key, byte[] value) {
         try {
             Jedis jedis = getJedis();
             jedis.set(key, value);
@@ -110,7 +110,7 @@ public class RedisUtils {
      * @param value
      * @param seconds 以秒为单位
      */
-    public synchronized static void set(String key, String value, int seconds) {
+    public static void set(String key, String value, int seconds) {
         try {
             value = StringUtils.isBlank(value) ? "" : value;
             Jedis jedis = getJedis();
@@ -128,7 +128,7 @@ public class RedisUtils {
      * @param value
      * @param seconds 以秒为单位
      */
-    public synchronized static void set(byte[] key, byte[] value, int seconds) {
+    public static void set(byte[] key, byte[] value, int seconds) {
         try {
             Jedis jedis = getJedis();
             jedis.set(key, value);
@@ -139,7 +139,7 @@ public class RedisUtils {
         }
     }
 
-    public synchronized static boolean setnx(String key, String value, int seconds) {
+    public static boolean setnx(String key, String value, int seconds) {
         try {
             Jedis jedis = getJedis();
             boolean result = jedis.setnx(key, value) > 0;
@@ -158,7 +158,7 @@ public class RedisUtils {
      * @param key
      * @return value
      */
-    public synchronized static String get(String key) {
+    public static String get(String key) {
         Jedis jedis = getJedis();
         if (null == jedis) {
             return null;
@@ -174,7 +174,7 @@ public class RedisUtils {
      * @param key
      * @return value
      */
-    public synchronized static byte[] get(byte[] key) {
+    public static byte[] get(byte[] key) {
         Jedis jedis = getJedis();
         if (null == jedis) {
             return null;
@@ -189,7 +189,7 @@ public class RedisUtils {
      *
      * @param key
      */
-    public synchronized static void remove(String key) {
+    public static void remove(String key) {
         try {
             Jedis jedis = getJedis();
             jedis.del(key);
@@ -204,7 +204,7 @@ public class RedisUtils {
      *
      * @param key
      */
-    public synchronized static void remove(byte[] key) {
+    public static void remove(byte[] key) {
         try {
             Jedis jedis = getJedis();
             jedis.del(key);
@@ -220,7 +220,7 @@ public class RedisUtils {
      * @param key
      * @param key
      */
-    public synchronized static void lpush(String key, String... strings) {
+    public static void lpush(String key, String... strings) {
         try {
             Jedis jedis = RedisUtils.getJedis();
             jedis.lpush(key, strings);
@@ -237,7 +237,7 @@ public class RedisUtils {
      * @param count
      * @param value
      */
-    public synchronized static void lrem(String key, long count, String value) {
+    public static void lrem(String key, long count, String value) {
         try {
             Jedis jedis = RedisUtils.getJedis();
             jedis.lrem(key, count, value);
@@ -254,7 +254,7 @@ public class RedisUtils {
      * @param value
      * @param seconds
      */
-    public synchronized static void sadd(String key, String value, int seconds) {
+    public static void sadd(String key, String value, int seconds) {
         try {
             Jedis jedis = RedisUtils.getJedis();
             jedis.sadd(key, value);
@@ -265,20 +265,20 @@ public class RedisUtils {
         }
     }
 
-    public synchronized static Long ttl(String key) throws JedisException {
+    public static Long ttl(String key) throws JedisException {
         Jedis jedis = RedisUtils.getJedis();
         Long timeout = jedis.ttl(key);
         jedis.close();
         return timeout;
     }
 
-    public synchronized static void setExpire(String key, int seconds) throws JedisException {
+    public static void setExpire(String key, int seconds) throws JedisException {
         Jedis jedis = RedisUtils.getJedis();
         jedis.expire(key, seconds);
         jedis.close();
     }
 
-    public synchronized static boolean exist(String key) throws JedisException {
+    public static boolean exist(String key) throws JedisException {
         Jedis jedis = RedisUtils.getJedis();
         boolean exist = jedis.exists(key);
         jedis.close();

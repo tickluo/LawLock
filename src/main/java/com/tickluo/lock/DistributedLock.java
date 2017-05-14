@@ -5,6 +5,7 @@ import com.tickluo.LawLockConfig;
 import com.tickluo.redis.RedisUtils;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.Transaction;
+import redis.clients.jedis.exceptions.JedisException;
 
 import java.util.UUID;
 
@@ -42,22 +43,18 @@ public class DistributedLock implements LawLock {
     }
 
     @Override
-    public boolean unlock(String key, String lockId) {
+    public boolean unlock(String key, String lockId) throws JedisException {
         String wrapKey = KEY_DES.concat(key);
         Long endTime = System.currentTimeMillis() + ATTEMPT_TIMEOUT;
 
         while (System.currentTimeMillis() < endTime) {
             Jedis jedis = RedisUtils.getJedis();
-            jedis.watch(wrapKey);
             if (lockId.equals(jedis.get(wrapKey))) {
-                Transaction transaction = jedis.multi();
-                transaction.del(wrapKey);
-                if (transaction.exec() != null) {
+                if (jedis.del(wrapKey) > 0) {
                     return true;
                 }
                 continue;
             }
-            jedis.unwatch();
             break;
         }
         return false;
